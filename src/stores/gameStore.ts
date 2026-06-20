@@ -1,27 +1,47 @@
 import { create } from 'zustand'
-import type { LevelProgress, MistakeRecord, ReviewResult, StudentAnswer, MistakeType } from '@/types'
+import type {
+  LevelProgress,
+  MistakeRecord,
+  ReviewResult,
+  StudentAnswer,
+  MistakeType,
+  AnswerHistoryRecord,
+  HintType,
+} from '@/types'
 import { reviewAnswer } from '@/utils/reviewer'
 import { getCaseById } from '@/data/cases'
 
 interface GameState {
   levelProgress: Record<string, LevelProgress>
   mistakes: MistakeRecord[]
+  answerHistory: AnswerHistoryRecord[]
   currentReview: ReviewResult | null
   currentAnswer: StudentAnswer | null
+  currentHintsUsed: HintType[]
 
   submitAnswer: (answer: StudentAnswer) => ReviewResult
   clearCurrentReview: () => void
+  setCurrentHintsUsed: (hints: HintType[]) => void
   removeMistakesByCase: (caseId: string) => void
+  markMistakeMastered: (mistakeId: string) => void
+  markCaseMastered: (caseId: string) => void
   getLevelProgress: (levelId: string) => LevelProgress
   getMistakesByType: (type: MistakeType) => MistakeRecord[]
+  getMistakesByCase: (caseId: string) => MistakeRecord[]
   getAllMistakes: () => MistakeRecord[]
+  getPendingMistakes: () => MistakeRecord[]
+  getMasteredMistakes: () => MistakeRecord[]
+  isCaseMastered: (caseId: string) => boolean
   getCompletedCaseCount: () => number
   getTotalScore: () => number
+  getHistoryByLevel: (levelId: string) => AnswerHistoryRecord[]
+  getHistoryByCase: (caseId: string) => AnswerHistoryRecord[]
   resetProgress: () => void
 }
 
 const STORAGE_KEY_PROGRESS = 'dental-progress'
 const STORAGE_KEY_MISTAKES = 'dental-mistakes'
+const STORAGE_KEY_HISTORY = 'dental-history'
 
 function loadProgress(): Record<string, LevelProgress> {
   try {
@@ -49,11 +69,26 @@ function saveMistakes(mistakes: MistakeRecord[]) {
   localStorage.setItem(STORAGE_KEY_MISTAKES, JSON.stringify(mistakes))
 }
 
+function loadHistory(): AnswerHistoryRecord[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY_HISTORY)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
+  }
+}
+
+function saveHistory(history: AnswerHistoryRecord[]) {
+  localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history))
+}
+
 export const useGameStore = create<GameState>((set, get) => ({
   levelProgress: loadProgress(),
   mistakes: loadMistakes(),
+  answerHistory: loadHistory(),
   currentReview: null,
   currentAnswer: null,
+  currentHintsUsed: [],
 
   submitAnswer: (answer: StudentAnswer) => {
     const caseData = getCaseById(answer.caseId)
@@ -87,6 +122,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     progress[levelId] = levelProg
     saveProgress(progress)
 
+    const mistakeTypes = result.fieldReviews
+      .flatMap((fr) => fr.mistakes.map((m) => m.type))
+
+    const historyRecord: AnswerHistoryRecord = {
+      id: answer.id,
+      caseId: answer.caseId,
+      levelId,
+      totalScore: result.totalScore,
+      maxScore: result.maxScore,
+      starRating: result.starRating,
+      timeSpent: answer.timeSpent,
+      hintsUsed: answer.hintsUsed,
+      mistakeTypes,
+      submittedAt: answer.submittedAt,
+    }
+
+    const newHistory = [...get().answerHistory, historyRecord]
+    saveHistory(newHistory)
+
     const newMistakes: MistakeRecord[] = result.fieldReviews
       .filter((fr) => fr.mistakes.length > 0)
       .flatMap((fr) =>
@@ -102,6 +156,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           rewriteSuggestion: m.rewriteSuggestion,
           createdAt: answer.submittedAt,
           studentAnswerId: answer.id,
+          mastered: false,
+          masteredAt: null,
         })),
       )
 
@@ -112,6 +168,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       levelProgress: progress,
       mistakes: allMistakes,
+      answerHistory: newHistory,
       currentReview: result,
       currentAnswer: answer,
     })
@@ -119,12 +176,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     return result
   },
 
-  clearCurrentReview: () => set({ currentReview: null, currentAnswer: null }),
+  clearCurrentReview: () => set({ currentReview: null, currentAnswer: null, currentHintsUsed: [] }),
+
+  setCurrentHintsUsed: (hints: HintType[]) => set({ currentHintsUsed: hints }),
 
   removeMistakesByCase: (caseId: string) => {
     const filtered = get().mistakes.filter((m) => m.caseId !== caseId)
     saveMistakes(filtered)
     set({ mistakes: filtered })
+  },
+
+  markMistakeMastered: (mistakeId: string) => {
+    const updated = get().mistakes.map((m) =>
+      m.id === mistakeId ? { ...m, mastered: true, masteredAt: new Date().toISOString() } : m
+    )
+    saveMistakes(updated)
+    set({ mistakes: updated })
+  },
+
+  markCaseMastered: (caseId: string) => {
+    const updated = get().mistakes.map((m) =>
+      m.caseId === caseId ? { ...m, mastered: true, masteredAt: new Date().toISOString() } : m
+    )
+    saveMistakes(updated)
+    set({ mistakes: updated })
   },
 
   getLevelProgress: (levelId: string) => {
@@ -140,7 +215,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     return get().mistakes.filter((m) => m.mistakeType === type)
   },
 
+  getMistakesByCase: (caseId: string) => {
+    return get().mistakes.filter((m) => m.caseId === caseId)
+  },
+
   getAllMistakes: () => get().mistakes,
+
+  getPendingMistakes: () => get().mistakes.filter((m) => !m.mastered),
+
+  getMasteredMistakes: () => get().mistakes.filter((m) => m.mastered),
+
+  isCaseMastered: (caseId: string) => {
+    const caseMistakes = get().mistakes.filter((m) => m.caseId === caseId)
+    if (caseMistakes.length === 0) return false
+    return caseMistakes.every((m) => m.mastered)
+  },
 
   getCompletedCaseCount: () => {
     const progress = get().levelProgress
@@ -162,14 +251,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     return total
   },
 
+  getHistoryByLevel: (levelId: string) => {
+    return get().answerHistory.filter((h) => h.levelId === levelId)
+  },
+
+  getHistoryByCase: (caseId: string) => {
+    return get().answerHistory.filter((h) => h.caseId === caseId)
+  },
+
   resetProgress: () => {
     localStorage.removeItem(STORAGE_KEY_PROGRESS)
     localStorage.removeItem(STORAGE_KEY_MISTAKES)
+    localStorage.removeItem(STORAGE_KEY_HISTORY)
     set({
       levelProgress: {},
       mistakes: [],
+      answerHistory: [],
       currentReview: null,
       currentAnswer: null,
+      currentHintsUsed: [],
     })
   },
 }))

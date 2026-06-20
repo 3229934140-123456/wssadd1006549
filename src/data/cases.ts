@@ -51,6 +51,11 @@ export const cases: CaseData[] = [
         suggestedTreatment: ['去龋备洞', '树脂充填', '咬翼片复查'],
       },
     },
+    hints: {
+      toothPosition: '关注右上后牙区，仔细辨认是哪颗牙的哪个面',
+      observationOrder: '先定位牙位→观察密度改变→判断累及深度→注意边缘特征→观察邻近结构',
+      judgment: '根据密度影的深度范围判断龋坏程度，区分浅、中、深龋',
+    },
   },
   {
     id: 'caries-2',
@@ -70,6 +75,11 @@ export const cases: CaseData[] = [
         preliminaryJudgment: ['35', '深龋', '可复性牙髓炎'],
         suggestedTreatment: ['间接盖髓术', '树脂充填', '根管治疗', '根尖片随访'],
       },
+    },
+    hints: {
+      toothPosition: '左下后牙区，注意区分前磨牙与磨牙',
+      observationOrder: '定位牙位→观察低密度影范围→判断与髓腔距离→检查根尖区情况',
+      judgment: '龋坏近髓时需考虑牙髓状态，深龋需与可复性牙髓炎鉴别',
     },
   },
   {
@@ -91,6 +101,11 @@ export const cases: CaseData[] = [
         suggestedTreatment: ['去除原充填体', '树脂充填', '垫底'],
       },
     },
+    hints: {
+      toothPosition: '右下后牙区，注意既有充填体的位置',
+      observationOrder: '先识别充填体→检查充填体下方及边缘→观察有无新发透射影→判断龋坏范围',
+      judgment: '充填体下方或边缘新发龋坏为继发龋，需判断原充填体是否失败',
+    },
   },
   {
     id: 'periapical-1',
@@ -110,6 +125,11 @@ export const cases: CaseData[] = [
         preliminaryJudgment: ['21', '根尖周肉芽肿', '慢性根尖周炎'],
         suggestedTreatment: ['根管治疗术', '随访观察', '根尖手术'],
       },
+    },
+    hints: {
+      toothPosition: '上前牙区，结合外伤史定位患牙',
+      observationOrder: '定位患牙→观察根尖区有无透射影→描述透射影形态与边界→注意根管及牙冠表现',
+      judgment: '根尖区边界清晰的类圆形透射影多为肉芽肿，边界不清伴皮质白线多为囊肿',
     },
   },
   {
@@ -131,6 +151,11 @@ export const cases: CaseData[] = [
         suggestedTreatment: ['根管再治疗', '根尖切除术', '根尖倒充填'],
       },
     },
+    hints: {
+      toothPosition: '左下后牙区，注意远中根管充填情况',
+      observationOrder: '定位患牙→观察根尖透射影大小形态→特别注意有无皮质白线→评估根管充填质量',
+      judgment: '较大透射影伴皮质白线是囊肿的典型表现，需结合根管治疗史判断',
+    },
   },
   {
     id: 'periapical-3',
@@ -150,6 +175,11 @@ export const cases: CaseData[] = [
         preliminaryJudgment: ['16', '根分叉病变', 'III度', '牙周牙髓联合病变'],
         suggestedTreatment: ['根管治疗', '评估预后', '拔除', '种植修复'],
       },
+    },
+    hints: {
+      toothPosition: '右上后牙区，关注根分叉位置',
+      observationOrder: '定位患牙→观察根分叉区→评估牙槽骨吸收程度→检查根尖区→综合判断',
+      judgment: '根分叉病变需分度，同时评估牙周和牙髓双重因素',
     },
   },
   {
@@ -171,6 +201,11 @@ export const cases: CaseData[] = [
         suggestedTreatment: ['消炎', '拔除', 'CBCT', '神经损伤'],
       },
     },
+    hints: {
+      toothPosition: '右下智齿区，注意阻生方向',
+      observationOrder: '确认牙位→判断阻生方向和角度→观察与邻牙关系→评估牙根形态→注意与神经管距离',
+      judgment: '根据阻生方向分类（水平/垂直/倾斜），评估拔除难度和风险',
+    },
   },
   {
     id: 'impacted-2',
@@ -190,6 +225,11 @@ export const cases: CaseData[] = [
         preliminaryJudgment: ['18', '垂直阻生齿', '根尖近上颌窦'],
         suggestedTreatment: ['拔除', 'CBCT', '上颌窦穿孔修补', '妊娠前完成'],
       },
+    },
+    hints: {
+      toothPosition: '右上智齿区，注意与上颌窦的位置关系',
+      observationOrder: '确认牙位→判断阻生类型→观察根尖与上颌窦关系→评估牙根数目和形态→注意周围骨质',
+      judgment: '上颌阻生齿需特别关注与上颌窦底的关系，评估穿孔风险',
     },
   },
   {
@@ -211,6 +251,11 @@ export const cases: CaseData[] = [
         suggestedTreatment: ['牙周基础治疗', '洁治', '刮治', '根面平整', '牙周夹板', '复查评估'],
       },
     },
+    hints: {
+      toothPosition: '下前牙区，注意逐牙记录受累牙位',
+      observationOrder: '逐牙定位→判断吸收类型（水平/垂直）→评估吸收程度→观察骨硬板和牙周膜→记录吸收比例',
+      judgment: '根据吸收程度判断牙周炎严重度，结合松动度综合评估',
+    },
   },
   {
     id: 'periodontal-2',
@@ -230,6 +275,11 @@ export const cases: CaseData[] = [
         preliminaryJudgment: ['36', '垂直型骨吸收', '根分叉病变', 'II度', '牙周牙髓联合病变'],
         suggestedTreatment: ['根管治疗', '牙周翻瓣术', '骨移植术', '引导组织再生术', '复查'],
       },
+    },
+    hints: {
+      toothPosition: '左下后牙区，关注近中和根分叉两个区域',
+      observationOrder: '定位患牙→判断骨吸收类型→描述缺损形态→评估根分叉受累→注意多因素并存',
+      judgment: '垂直型骨吸收和根分叉病变并存时需考虑牙周-牙髓联合病变',
     },
   },
 ]

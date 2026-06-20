@@ -9,10 +9,10 @@ import type {
 } from '@/types'
 import { ANSWER_FIELD_LABELS } from '@/types'
 
-const DIAGNOSIS_TERMS = [
-  '龋', '龋坏', '龋齿', '根尖周炎', '根尖囊肿', '肉芽肿',
-  '牙周炎', '牙髓炎', '冠周炎', '阻生', '骨髓炎',
-  '吸收', '囊肿', '肿瘤', '骨折',
+const STRICT_DIAGNOSIS_TERMS = [
+  '根尖周炎', '根尖囊肿', '肉芽肿',
+  '牙周炎', '牙髓炎', '冠周炎', '骨髓炎',
+  '肿瘤', '骨折',
 ]
 
 function findMissingKeywords(studentText: string, keywords: string[]): string[] {
@@ -35,10 +35,13 @@ function checkDisorderedDescription(studentText: string, keywords: string[]): bo
   return false
 }
 
-function checkDiagnosisOverreach(studentText: string): string[] {
+function checkDiagnosisOverreach(
+  studentText: string,
+  standardFindingsText: string,
+): string[] {
   const found: string[] = []
-  for (const term of DIAGNOSIS_TERMS) {
-    if (studentText.includes(term)) {
+  for (const term of STRICT_DIAGNOSIS_TERMS) {
+    if (studentText.includes(term) && !standardFindingsText.includes(term)) {
       found.push(term)
     }
   }
@@ -94,14 +97,14 @@ function reviewField(
       })
     }
 
-    const overreachTerms = checkDiagnosisOverreach(studentAnswer)
+    const overreachTerms = checkDiagnosisOverreach(studentAnswer, standardAnswer.imagingFindings)
     if (overreachTerms.length > 0) {
       mistakes.push({
         type: 'diagnosis_overreach' as MistakeType,
         description: `影像所见栏中出现了诊断性用语（${overreachTerms.join('、')}），应使用描述性用语`,
         studentContent: studentAnswer,
         standardContent: standardText,
-        rewriteSuggestion: `影像所见应描述"看到了什么"而非"是什么病"。例如用"低密度透射影"代替"龋坏"，用"根尖区透射影"代替"根尖周炎"`,
+        rewriteSuggestion: `影像所见应描述「看到了什么」而非「是什么病」。例如用「低密度透射影」代替「根尖周炎」，用「根尖区透射影」代替「肉芽肿」`,
       })
     }
 
@@ -193,5 +196,6 @@ export function reviewAnswer(
     starRating,
     fieldReviews,
     timeSpent: studentAnswer.timeSpent,
+    hintsUsed: studentAnswer.hintsUsed,
   }
 }

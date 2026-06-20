@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom'
-import { ScanEye, Crosshair, GitBranch, Activity, BookOpen, Star, ChevronRight, RotateCcw, Trophy, ClipboardList } from 'lucide-react'
+import { ScanEye, Crosshair, GitBranch, Activity, BookOpen, Star, ChevronRight, RotateCcw, Trophy, ClipboardList, TrendingUp } from 'lucide-react'
 import { levels, getCasesByLevel } from '@/data/cases'
 import { useGameStore } from '@/stores/gameStore'
 
@@ -30,11 +30,13 @@ export default function Home() {
   const getCompletedCaseCount = useGameStore((s) => s.getCompletedCaseCount)
   const getTotalScore = useGameStore((s) => s.getTotalScore)
   const getAllMistakes = useGameStore((s) => s.getAllMistakes)
+  const getPendingMistakes = useGameStore((s) => s.getPendingMistakes)
   const resetProgress = useGameStore((s) => s.resetProgress)
 
   const completedCount = getCompletedCaseCount()
   const totalScore = getTotalScore()
   const mistakes = getAllMistakes()
+  const pendingMistakes = getPendingMistakes()
 
   const totalCases = levels.reduce((sum, l) => sum + getCasesByLevel(l.id).length, 0)
 
@@ -80,7 +82,7 @@ export default function Home() {
               <ClipboardList className="w-5 h-5 text-red-300" />
               <div>
                 <div className="text-xs opacity-60">待复习错题</div>
-                <div className="text-xl font-bold">{mistakes.length}</div>
+                <div className="text-xl font-bold">{pendingMistakes.length}</div>
               </div>
             </div>
           </div>
@@ -91,6 +93,12 @@ export default function Home() {
         <div className="flex items-center justify-between mb-6 animate-fade-in-up stagger-3">
           <h2 className="font-serif text-2xl font-semibold text-gray-800">选择关卡</h2>
           <div className="flex gap-3">
+            {completedCount > 0 && (
+              <Link to="/progress" className="btn-primary flex items-center gap-2 text-sm">
+                <TrendingUp className="w-4 h-4" />
+                学习进步
+              </Link>
+            )}
             {mistakes.length > 0 && (
               <Link to="/mistakes" className="btn-accent flex items-center gap-2 text-sm">
                 <ClipboardList className="w-4 h-4" />

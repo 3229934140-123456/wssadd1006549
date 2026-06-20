@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock, Send, ZoomIn, User, Stethoscope } from 'lucide-react'
+import { ArrowLeft, Clock, Send, ZoomIn, User, Stethoscope, Lightbulb, MapPin, Eye, BrainCircuit } from 'lucide-react'
 import { getCaseById } from '@/data/cases'
 import { useGameStore } from '@/stores/gameStore'
-import type { AnswerField, StudentAnswer } from '@/types'
-import { ANSWER_FIELD_LABELS } from '@/types'
+import type { AnswerField, StudentAnswer, HintType } from '@/types'
+import { ANSWER_FIELD_LABELS, HINT_TYPE_LABELS } from '@/types'
 
 const HINTS: Record<AnswerField, string> = {
   toothPosition: '如：16远中邻面',
@@ -15,11 +15,20 @@ const HINTS: Record<AnswerField, string> = {
 
 const FIELDS: AnswerField[] = ['toothPosition', 'imagingFindings', 'preliminaryJudgment', 'suggestedTreatment']
 
+const HINT_TYPES: HintType[] = ['toothPosition', 'observationOrder', 'judgment']
+
+const HINT_ICONS: Record<HintType, React.ElementType> = {
+  toothPosition: MapPin,
+  observationOrder: Eye,
+  judgment: BrainCircuit,
+}
+
 export default function Practice() {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate = useNavigate()
   const submitAnswer = useGameStore((s) => s.submitAnswer)
   const clearCurrentReview = useGameStore((s) => s.clearCurrentReview)
+  const setCurrentHintsUsed = useGameStore((s) => s.setCurrentHintsUsed)
 
   const caseData = caseId ? getCaseById(caseId) : undefined
 
@@ -32,6 +41,7 @@ export default function Practice() {
   const [startTime] = useState(Date.now())
   const [elapsed, setElapsed] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hintsUsed, setHintsUsed] = useState<HintType[]>([])
   const [imgLoaded, setImgLoaded] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [isHovering, setIsHovering] = useState(false)
@@ -84,11 +94,13 @@ export default function Practice() {
       suggestedTreatment: form.suggestedTreatment.trim(),
       timeSpent,
       submittedAt: new Date().toISOString(),
+      hintsUsed,
     }
 
     submitAnswer(answer)
+    setCurrentHintsUsed(hintsUsed)
     navigate(`/review/${caseId}`)
-  }, [caseId, form, isSubmitting, startTime, submitAnswer, navigate])
+  }, [caseId, form, isSubmitting, startTime, submitAnswer, navigate, hintsUsed, setCurrentHintsUsed])
 
   if (!caseData) {
     return (
@@ -178,6 +190,43 @@ export default function Practice() {
             <h2 className="font-serif text-lg font-semibold text-primary border-b border-dental-border pb-2">
               书写报告
             </h2>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                {HINT_TYPES.map((type) => {
+                  const used = hintsUsed.includes(type)
+                  const Icon = HINT_ICONS[type]
+                  return (
+                    <button
+                      key={type}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-2 ${
+                        used
+                          ? 'bg-primary/10 border-primary/30 text-primary'
+                          : 'btn-secondary py-2 px-3 text-sm'
+                      }`}
+                      onClick={() => {
+                        if (!used) setHintsUsed((prev) => [...prev, type])
+                      }}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {HINT_TYPE_LABELS[type]}
+                    </button>
+                  )
+                })}
+              </div>
+              {hintsUsed.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {hintsUsed.map((type) => (
+                    <div
+                      key={type}
+                      className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex items-start gap-2"
+                    >
+                      <Lightbulb className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                      <span className="text-sm text-blue-800">{caseData.hints[type]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex flex-col gap-4 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] lg:max-h-[calc(100vh-220px)] pr-1">
               {FIELDS.map((field) => (
                 <div key={field} className="flex flex-col gap-1.5">
@@ -198,18 +247,23 @@ export default function Practice() {
               ))}
             </div>
 
-            <button
-              className={`btn-accent w-full flex items-center justify-center gap-2 mt-2 py-3 text-base ${
-                !FIELDS.some((f) => form[f].trim().length > 0) || isSubmitting
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
-              }`}
-              onClick={handleSubmit}
-              disabled={!FIELDS.some((f) => form[f].trim().length > 0) || isSubmitting}
-            >
-              <Send className="w-4 h-4" />
-              {isSubmitting ? '提交中...' : '提交报告'}
-            </button>
+            <div className="flex flex-col gap-2 mt-2">
+              <p className="text-xs text-text-muted text-center">
+                已使用 {hintsUsed.length}/3 提示
+              </p>
+              <button
+                className={`btn-accent w-full flex items-center justify-center gap-2 py-3 text-base ${
+                  !FIELDS.some((f) => form[f].trim().length > 0) || isSubmitting
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
+                }`}
+                onClick={handleSubmit}
+                disabled={!FIELDS.some((f) => form[f].trim().length > 0) || isSubmitting}
+              >
+                <Send className="w-4 h-4" />
+                {isSubmitting ? '提交中...' : '提交报告'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

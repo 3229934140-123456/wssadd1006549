@@ -3,6 +3,7 @@ import Home from "@/pages/Home";
 import Practice from "@/pages/Practice";
 import Review from "@/pages/Review";
 import Mistakes from "@/pages/Mistakes";
+import Progress from "@/pages/Progress";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/practice/:caseId" element={<Practice />} />
         <Route path="/review/:caseId" element={<Review />} />
         <Route path="/mistakes" element={<Mistakes />} />
+        <Route path="/progress" element={<Progress />} />
       </Routes>
     </Router>
   );

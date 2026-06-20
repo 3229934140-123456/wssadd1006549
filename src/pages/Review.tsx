@@ -10,11 +10,12 @@ import {
   Lightbulb,
   Trophy,
   RotateCcw,
+  Redo,
 } from 'lucide-react'
 import { useGameStore } from '@/stores/gameStore'
 import { getCaseById } from '@/data/cases'
-import { MISTAKE_TYPE_LABELS, ANSWER_FIELD_LABELS } from '@/types'
-import type { FieldReview, MistakeDetail } from '@/types'
+import { MISTAKE_TYPE_LABELS, ANSWER_FIELD_LABELS, HINT_TYPE_LABELS } from '@/types'
+import type { FieldReview, MistakeDetail, HintType } from '@/types'
 
 const STATUS_CONFIG = {
   correct: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200', label: '✓' },
@@ -182,14 +183,19 @@ function FieldCard({ review, index }: { review: FieldReview; index: number }) {
   )
 }
 
-function CelebrationMessage() {
+function CelebrationMessage({ hintsUsed }: { hintsUsed: HintType[] }) {
+  const noHints = hintsUsed.length === 0
   return (
     <div className="animate-scale-in text-center py-8">
       <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-100 mb-4">
         <Trophy size={40} className="text-amber-500" />
       </div>
-      <h2 className="font-serif text-2xl font-bold text-primary mb-2">满分通过！</h2>
-      <p className="text-gray-500">所有字段均完全正确，表现非常出色！</p>
+      <h2 className="font-serif text-2xl font-bold text-primary mb-2">
+        {noHints ? '满分通过！独立完成，非常出色！' : '满分通过！注意下次尝试独立完成。'}
+      </h2>
+      <p className="text-gray-500">
+        {noHints ? '所有字段均完全正确，表现非常出色！' : '所有字段均完全正确，但使用了提示辅助。'}
+      </p>
     </div>
   )
 }
@@ -240,10 +246,36 @@ export default function Review() {
               <RotateCcw size={14} />
               {formatTime(currentReview.timeSpent)}
             </span>
+            {currentReview.hintsUsed.length === 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <CheckCircle2 size={12} />
+                独立完成
+              </span>
+            )}
           </div>
         </div>
 
-        {isAllCorrect && <CelebrationMessage />}
+        {currentReview.hintsUsed.length > 0 && (
+          <div className="card border-amber-200 bg-amber-50/40 animate-fade-in-up mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb size={20} className="text-amber-500" />
+              <h3 className="font-serif font-semibold text-lg text-amber-800">提示使用记录</h3>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {currentReview.hintsUsed.map((hint) => (
+                <span
+                  key={hint}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700 border border-amber-200"
+                >
+                  {HINT_TYPE_LABELS[hint]}
+                </span>
+              ))}
+            </div>
+            <p className="text-sm text-amber-600">本次作答使用了提示，带教老师可参考</p>
+          </div>
+        )}
+
+        {isAllCorrect && <CelebrationMessage hintsUsed={currentReview.hintsUsed} />}
 
         <div className="space-y-4">
           {currentReview.fieldReviews.map((review, i) => (
@@ -258,6 +290,13 @@ export default function Review() {
           >
             <ArrowLeft size={16} />
             返回关卡
+          </button>
+          <button
+            onClick={() => navigate(`/practice/${caseId}`)}
+            className="btn-secondary inline-flex items-center gap-2"
+          >
+            <Redo size={16} />
+            重做此题
           </button>
           <button
             onClick={() => navigate('/mistakes')}
